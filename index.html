@@ -1,1 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Image Slideshow</title>
+    <style>
+      body {
+        background-color: #f0f0f0;
+        font-family: Arial, sans-serif;
+      }
+      .image-container {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 10px;
+        margin-bottom: 20px;
+      }
+      .image-wrapper {
+        position: relative;
+        overflow: hidden;
+      }
+      .image-wrapper img {
+        max-width: 100%;
+        height: auto;
+        transform-origin: center;
+        transition: transform 0.3s ease, width 0.3s ease, height 0.3s ease;
+      }
+      .controls {
+        position: absolute;
+        bottom: 10px;
+        left: 10px;
+        right: 10px;
+        display: flex;
+        justify-content: space-between;
+      }
+      button {
+        padding: 5px 10px;
+        font-size: 12px;
+        cursor: pointer;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>Image Slideshow</h1>
+    <p>
+      Drop up to 100 images below. Each image will be editable (resizable,
+      rotatable, cropable) and displayed with a 0.1 second delay.
+    </p>
 
+    <div id="imageContainer" class="image-container"></div>
+
+    <input type="file" id="fileInput" multiple accept="image/*" />
+    <br /><br />
+
+    <button id="startSlideshow">Start Slideshow</button>
+
+    <script>
+      let images = [];
+      let currentIndex = 0;
+
+      // Handle file input change
+      document
+        .getElementById("fileInput")
+        .addEventListener("change", function (event) {
+          const files = event.target.files;
+          if (files.length > 100) {
+            alert("Please upload a maximum of 100 images.");
+            return;
+          }
+          loadImages(files);
+        });
+
+      function loadImages(files) {
+        const imageContainer = document.getElementById("imageContainer");
+        imageContainer.innerHTML = ""; // Clear the container
+        images = [];
+
+        Array.from(files).forEach((file) => {
+          const reader = new FileReader();
+          reader.onload = function (e) {
+            const imgWrapper = document.createElement("div");
+            imgWrapper.classList.add("image-wrapper");
+
+            const img = document.createElement("img");
+            img.src = e.target.result;
+
+            imgWrapper.appendChild(img);
+            createImageControls(imgWrapper, img);
+            imageContainer.appendChild(imgWrapper);
+
+            images.push(imgWrapper);
+          };
+          reader.readAsDataURL(file);
+        });
+      }
+
+      function createImageControls(wrapper, img) {
+        const controls = document.createElement("div");
+        controls.classList.add("controls");
+
+        // Rotation control
+        const rotateBtn = document.createElement("button");
+        rotateBtn.textContent = "Rotate";
+        rotateBtn.addEventListener("click", function () {
+          const currentRotation =
+            getComputedStyle(img).getPropertyValue("transform");
+          img.style.transform =
+            currentRotation === "none" ? "rotate(90deg)" : "";
+        });
+
+        // Resize control
+        const resizeBtn = document.createElement("button");
+        resizeBtn.textContent = "Resize";
+        resizeBtn.addEventListener("click", function () {
+          const currentWidth = img.style.width;
+          img.style.width = currentWidth === "100%" ? "50%" : "100%";
+        });
+
+        // Crop control (simple zoom in/out as cropping)
+        const cropBtn = document.createElement("button");
+        cropBtn.textContent = "Crop";
+        cropBtn.addEventListener("click", function () {
+          const currentScale = img.style.transform;
+          img.style.transform = currentScale.includes("scale")
+            ? ""
+            : "scale(1.5)";
+        });
+
+        controls.appendChild(rotateBtn);
+        controls.appendChild(resizeBtn);
+        controls.appendChild(cropBtn);
+        wrapper.appendChild(controls);
+      }
+
+      // Start the slideshow with 0.1 second delay
+      document
+        .getElementById("startSlideshow")
+        .addEventListener("click", function () {
+          currentIndex = 0;
+          playSlideshow();
+        });
+
+      function playSlideshow() {
+        if (images.length === 0) return;
+
+        // Hide all images
+        images.forEach((imgWrapper) => (imgWrapper.style.display = "none"));
+
+        // Show current image
+        images[currentIndex].style.display = "block";
+
+        // Move to the next image after 0.1 seconds
+        currentIndex = (currentIndex + 1) % images.length;
+        setTimeout(playSlideshow, 100); // 100ms = 0.1 seconds
+      }
+    </script>
+  </body>
+</html>
